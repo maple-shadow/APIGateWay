@@ -23,7 +23,8 @@ func BenchmarkAServiceName(b *testing.B) {
 		newExample := genExample(i)
 		resp, err := example_(newExample)
 		Assert(b, err == nil, err)
-		fmt.Println(*resp)
+		//fmt.Println(*resp)
+		*resp = *resp + ""
 	}
 }
 
@@ -70,15 +71,6 @@ func genExample(id int) *server.ExampleReq {
 			Extra: nil,
 		},
 	}
-	//return &demo.Student{
-	//	Id:   int32(id),
-	//	Name: fmt.Sprintf("student-%d", id),
-	//	College: &demo.College{
-	//		Name:    "",
-	//		Address: "",
-	//	},
-	//	Email: []string{fmt.Sprintf("student-%d@nju.com", id)},
-	//}
 }
 
 // Assert asserts cond is true, otherwise fails the test.
