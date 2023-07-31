@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/common/adaptor"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
@@ -29,34 +28,31 @@ func RpcMethod(ctx context.Context, c *app.RequestContext) {
 		//panic("get custom req failed")
 	}
 
+	//转json
 	jsonStr, err := json.Marshal(customReq.Body)
 	jsonReq := string(jsonStr)
-	fmt.Println(jsonReq)
-	//fmt.Println(req)
-	//c.JSON(consts.StatusOK, req)
-	//fmt.Println(req)
 
+	//从路由中获取目标服务名
 	targetName := c.Param("svrName")
 
+	//在缓存中查找相关服务的客户端
 	cli := cliMap[targetName]
 
+	//如果缓存中不存在就向idlSvr请求
 	if cli == nil {
 		cli = getIdlInfo(ctx, targetName)
 	}
 
+	//如果idlSvr也中不存在就返回
 	if cli == nil {
 		c.JSON(consts.StatusOK, "can not find "+targetName)
 		return
 	}
 
-	fmt.Println(targetName)
-	fmt.Println(c.Param("methodName"))
-
+	//发送泛化调用请求
 	resp, err := cli.GenericCall(ctx, c.Param("methodName"), jsonReq)
 
-	//fmt.Println(resp)
 	c.JSON(consts.StatusOK, resp)
-	//fmt.Println(resp)
 }
 
 func AddIdlInfo(ctx context.Context, c *app.RequestContext) {
@@ -71,37 +67,37 @@ func AddIdlInfo(ctx context.Context, c *app.RequestContext) {
 		//panic("get custom req failed")
 	}
 
+	//转json
 	jsonStr, err := json.Marshal(customReq.Body)
 	jsonReq := string(jsonStr)
-	fmt.Println(jsonReq)
-	//fmt.Println(req)
-	//c.JSON(consts.StatusOK, req)
-	//fmt.Println(req)
 
+	//构建idlSvr的客户端
 	cli := initIdlGenericClient("idlSvr")
 
+	//发送泛化调用请求
 	resp, err := cli.GenericCall(ctx, "Register", jsonReq)
 
+	//向idlSvr获取idl信息
 	getIdlInfo(ctx, c.Param("idlName"))
 
-	//fmt.Println(resp)
 	c.JSON(consts.StatusOK, resp)
-	//fmt.Println(resp)
 }
 
+/*
+向idlSvr获取idl信息
+*/
 func getIdlInfo(ctx context.Context, name string) genericclient.Client {
+
+	//构建idlSvr客户端
 	idlCli, err := idlservice.NewClient("idlSvr", kclient.WithHostPorts("127.0.0.1:9999"))
 	if err != nil {
 		panic("err new client:" + err.Error())
 	}
 
-	fmt.Println("get: " + name)
-
+	//发送查询请求
 	idlResp, err := idlCli.Query(ctx, name)
 
-	//fmt.Println(idlResp)
-	//
-	//fmt.Println(idlResp.Content)
+	//不存在该服务的idl信息
 	if idlResp == nil {
 		return nil
 	}
@@ -110,40 +106,40 @@ func getIdlInfo(ctx context.Context, name string) genericclient.Client {
 		panic("err query rpc server:" + err.Error())
 	}
 
+	//构建该服务的泛化调用客户端
 	newCli := initGenericClient(name, idlResp.Content, idlResp.Includes)
 
+	//将新生成的泛化调用客户端存入缓存
 	cliMap[name] = newCli
 
 	return cliMap[name]
 }
 
+/*
+构建泛化调用客户端
+*/
 func initGenericClient(svrName string, content string, includes map[string]string) genericclient.Client {
-	// 本地文件 idl 解析
-	// YOUR_IDL_PATH thrift 文件路径: 举例 ./idl/example.thrift
-	// includeDirs: 指定 include 路径，默认用当前文件的相对路径寻找 include
-	//p, err := generic.NewThriftFileProvider("../example_service.thrift")
 
-	//p, err := generic.NewThriftFileProvider("../idlsvr2.0/idl.thrift")
-	//if err != nil {
-	//	panic(err)
-	//}
+	//根据内容解析IDL文件
 	p, err := generic.NewThriftContentProvider(content, includes)
 	if err != nil {
 		panic(err)
 	}
 
-	// 构造 http 类型的泛化调用
+	// 构造 json 类型的泛化调用
 	g, err := generic.JSONThriftGeneric(p)
 	if err != nil {
 		panic(err)
 	}
 
+	//从注册中心获取目标服务
 	r, err := etcd.NewEtcdResolver([]string{"127.0.0.1:2379"})
 	if err != nil {
 		panic("err in resolver")
 		//log.Fatal(err)
 	}
 
+	//构建泛化调用客户端，采用加权随机负载均衡
 	cli, err := genericclient.NewClient(
 		svrName,
 		g,
@@ -158,17 +154,12 @@ func initGenericClient(svrName string, content string, includes map[string]strin
 	return cli
 }
 
+/*
+构建idlSvr的客户端
+*/
 func initIdlGenericClient(svrName string) genericclient.Client {
-	// 本地文件 idl 解析
-	// YOUR_IDL_PATH thrift 文件路径: 举例 ./idl/example.thrift
-	// includeDirs: 指定 include 路径，默认用当前文件的相对路径寻找 include
-	//p, err := generic.NewThriftFileProvider("../example_service.thrift")
 
-	//p, err := generic.NewThriftFileProvider("../idlsvr2.0/idl.thrift")
-	//if err != nil {
-	//	panic(err)
-	//}
-
+	//idlSvr的idl文件
 	path := "a/b/main.thrift"
 	content := `
 namespace go demo
@@ -199,17 +190,19 @@ service IdlService {
 		path: content,
 	}
 
+	//根据内容解析IDL文件
 	p, err := generic.NewThriftContentProvider(content, includes)
 	if err != nil {
 		panic(err)
 	}
 
-	// 构造 http 类型的泛化调用
+	// 构造 json 类型的泛化调用
 	g, err := generic.JSONThriftGeneric(p)
 	if err != nil {
 		panic(err)
 	}
 
+	//从注册中心获取idlSvr服务
 	r, err := etcd.NewEtcdResolver([]string{"127.0.0.1:2379"})
 	if err != nil {
 		panic("err in resolver")

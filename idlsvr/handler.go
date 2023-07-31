@@ -2,29 +2,27 @@ package main
 
 import (
 	"context"
-	"fmt"
 	demo "github.com/maple-shadow/idlsvr/kitex_gen/demo"
 )
 
 // IdlServiceImpl implements the last service interface defined in the IDL.
 type IdlServiceImpl struct{}
 
+// 用来存储idl信息的图
 var idlInfoMap = make(map[string]*demo.IdlInfo)
 
 // Register implements the IdlServiceImpl interface.
 func (s *IdlServiceImpl) Register(ctx context.Context, idlReq *demo.IdlReq) (resp *demo.AddIdlResp, err error) {
 	// TODO: Your code here...
 
-	fmt.Println(idlReq.IdlName)
-	fmt.Println(idlReq.IdlInfo.Content)
-	fmt.Println(idlReq.IdlInfo.Includes)
-
+	//将新的idl信息储存起来
 	idlInfoMap[idlReq.IdlName] = idlReq.IdlInfo
 
 	resp = new(demo.AddIdlResp)
 
-	fmt.Println(idlInfoMap)
+	//返回添加成功的信息
 	resp.Message = "add idl success"
+
 	return resp, nil
 }
 
@@ -32,11 +30,10 @@ func (s *IdlServiceImpl) Register(ctx context.Context, idlReq *demo.IdlReq) (res
 func (s *IdlServiceImpl) Query(ctx context.Context, name string) (resp *demo.IdlInfo, err error) {
 	// TODO: Your code here...
 
-	fmt.Println("query: " + name)
 	resp = new(demo.IdlInfo)
 
+	//从储存中获取idl信息
 	resp = idlInfoMap[name]
 
-	fmt.Println(resp)
 	return resp, nil
 }

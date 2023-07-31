@@ -13,7 +13,6 @@ import (
 
 func main() {
 	addr, _ := net.ResolveTCPAddr("tcp", "127.0.0.1:9999")
-	//svr := demo.NewServer(new(IdlServiceImpl), server.WithServiceAddr(addr))
 
 	r, err := etcd.NewEtcdRegistry([]string{"127.0.0.1:2379"})
 	if err != nil {
@@ -31,6 +30,7 @@ func main() {
 		server.WithServiceAddr(addr),
 	)
 
+	//初始化储存idl的图
 	initIdlMap()
 
 	err = svr.Run()
@@ -40,6 +40,9 @@ func main() {
 	}
 }
 
+/*
+提前准备部分idl信息便于测试
+*/
 func initIdlMap() {
 
 	path := "a/b/main.thrift"

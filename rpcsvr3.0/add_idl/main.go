@@ -19,8 +19,11 @@ type IdlInfo struct {
 	includes map[string]string
 }
 
+/*
+添加idl信息，用于测试idl热更新
+*/
 func main() {
-	url := flag.String("url", "http://127.0.0.1:8888/idl-info/add/Emma", "request url")
+	url := flag.String("url", "http://127.0.0.1:8888/idl-info/add/CServiceName", "request url")
 
 	path := "a/b/main.thrift"
 	content := `
@@ -70,25 +73,6 @@ struct BaseResp {
 `,
 	}
 
-	//idlInfoMap := make(map[string]string)
-	//
-	//dataType, _ := json.Marshal(includes)
-	//includesStr := string(dataType)
-	//
-	//idlInfoMap["content"] = content
-	//idlInfoMap["includes"] = includesStr
-	//
-	//idlReqMap := make(map[string]string)
-	//
-	//dataType, _ = json.Marshal(idlInfoMap)
-	//idlInfoStr := string(dataType)
-	//
-	//idlReqMap["idlName"] = "destServiceName3.0"
-	//idlReqMap["idlInfo"] = idlInfoStr
-	//
-	//dataType, _ = json.Marshal(idlReqMap)
-	//idlReqStr := string(dataType)
-
 	var idlInfo = IdlInfo{
 		content:  content,
 		includes: includes,
@@ -110,6 +94,9 @@ struct BaseResp {
 
 }
 
+/*
+发送post请求
+*/
 func post(url string, contentType string, reqBody string) {
 	fmt.Println("POST REQ...")
 	fmt.Println("REQ:", reqBody)

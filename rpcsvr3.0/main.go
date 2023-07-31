@@ -12,14 +12,16 @@ import (
 )
 
 func main() {
+	//设置监听端口
 	addr, _ := net.ResolveTCPAddr("tcp", "127.0.0.1:8891")
-	//svr := demo.NewServer(new(StudentServiceImpl), server.WithServiceAddr(addr))
 
+	//注册服务
 	r, err := etcd.NewEtcdRegistry([]string{"127.0.0.1:2379"})
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	//设置注册信息
 	ri := &registry.Info{
 		ServiceName: "CServiceName",
 		Tags: map[string]string{
@@ -27,6 +29,7 @@ func main() {
 		},
 	}
 
+	//构建服务器
 	svr := exampleservice.NewServer(
 		new(ExampleServiceImpl),
 		server.WithRegistry(r),
@@ -37,9 +40,9 @@ func main() {
 		server.WithServiceAddr(addr),
 	)
 
+	//启动服务
 	err = svr.Run()
 	if err != nil {
 		panic(err)
 	}
-	// resp is a JSON string
 }

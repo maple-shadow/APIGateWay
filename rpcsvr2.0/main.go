@@ -14,38 +14,16 @@ import (
 )
 
 func main() {
-	//svr := server0.NewServer(new(ExampleServiceImpl))
-	//
-	//err := svr.Run()
-	//
-	//if err != nil {
-	//	log.Println(err.Error())
-	//}
-
-	// 本地文件 idl 解析
-	// YOUR_IDL_PATH thrift 文件路径: e.g. ./idl/example.thrift
-	//p, err := generic.NewThriftFileProvider("../example_service.thrift")
-	//if err != nil {
-	//	panic(err)
-	//}
-	//// 构造 JSON 请求和返回类型的泛化调用
-	//g, err := generic.JSONThriftGeneric(p)
-	//if err != nil {
-	//	panic(err)
-	//}
-
-	//svr := genericserver.NewServer(new(GenericServiceImpl), g, opts...)
-	//if err != nil {
-	//	panic(err)
-	//}
+	//设置监听端口
 	addr, _ := net.ResolveTCPAddr("tcp", "127.0.0.1:8890")
-	//svr := demo.NewServer(new(StudentServiceImpl), server.WithServiceAddr(addr))
 
+	//注册服务
 	r, err := etcd.NewEtcdRegistry([]string{"127.0.0.1:2379"})
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	//设置注册信息
 	ri := &registry.Info{
 		ServiceName: "BServiceName",
 		Tags: map[string]string{
@@ -53,6 +31,7 @@ func main() {
 		},
 	}
 
+	//构建服务器
 	svr := exampleservice.NewServer(
 		new(ExampleServiceImpl),
 		server.WithRegistry(r),
@@ -63,31 +42,9 @@ func main() {
 		server.WithServiceAddr(addr),
 	)
 
+	//启动服务
 	err = svr.Run()
 	if err != nil {
 		panic(err)
 	}
-	// resp is a JSON string
 }
-
-//type GenericServiceImpl struct {
-//}
-//
-//func (g *GenericServiceImpl) GenericCall(ctx context.Context, method string, request interface{}) (response interface{}, err error) {
-//	// use jsoniter or other json parse sdk to assert request
-//	m := request.(string)
-//	fmt.Printf("Recv: %v\n", m)
-//	if method == "ExampleMethod" {
-//		req := &server2.ExampleReq{
-//			Msg:  m,
-//			Base: nil,
-//		}
-//		var s *ExampleServiceImpl
-//		resp, err := s.ExampleMethod(ctx, req)
-//		if err != nil {
-//			return nil, err
-//		}
-//		return resp, nil
-//	}
-//	return "{\"Msg\": \"Hello,world\"}", nil
-//}
