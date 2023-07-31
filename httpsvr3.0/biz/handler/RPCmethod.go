@@ -16,6 +16,8 @@ import (
 
 var cliMap = make(map[string]genericclient.Client)
 
+var idlSvr genericclient.Client
+
 func RpcMethod(ctx context.Context, c *app.RequestContext) {
 	httpReq, err := adaptor.GetCompatRequest(c.GetRequest())
 	if err != nil {
@@ -72,7 +74,11 @@ func AddIdlInfo(ctx context.Context, c *app.RequestContext) {
 	jsonReq := string(jsonStr)
 
 	//构建idlSvr的客户端
-	cli := initIdlGenericClient("idlSvr")
+	if idlSvr == nil {
+		idlSvr = initIdlGenericClient("idlSvr")
+	}
+
+	cli := idlSvr
 
 	//发送泛化调用请求
 	resp, err := cli.GenericCall(ctx, "Register", jsonReq)
