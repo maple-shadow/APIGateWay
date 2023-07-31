@@ -21,7 +21,8 @@ func (s *IdlServiceImpl) Register(ctx context.Context, idlReq *demo.IdlReq) (res
 	resp = new(demo.AddIdlResp)
 
 	//返回添加成功的信息
-	resp.Message = "add idl success"
+	resp.Message = "add idl success " + idlReq.IdlName
+	resp.Success = true
 
 	return resp, nil
 }

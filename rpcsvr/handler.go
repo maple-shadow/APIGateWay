@@ -12,7 +12,7 @@ type ExampleServiceImpl struct{}
 func (s *ExampleServiceImpl) ExampleMethod(ctx context.Context, req *server0.ExampleReq) (resp *server0.ExampleResp, err error) {
 	// TODO: Your code here...
 	resp = &server0.ExampleResp{
-		Msg:      "call success",
+		Msg:      "call success " + req.Msg,
 		BaseResp: nil,
 	}
 	return resp, nil
